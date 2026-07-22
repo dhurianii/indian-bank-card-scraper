@@ -1,0 +1,25 @@
+# --------------------------------------------------------------------------
+# Indian Bank Card Scraper — Version 1 dependencies
+# --------------------------------------------------------------------------
+# Keep this list MINIMAL. Only add a library when there is a clear,
+# unavoidable need. We can always add more later.
+# --------------------------------------------------------------------------
+
+# HTTP client — used by downloader.py to fetch HTML and image bytes.
+requests==2.32.3
+
+# HTML parsing — BeautifulSoup with the built-in html.parser is enough
+# for v1. lxml is faster but adds a C dependency we don't need yet.
+beautifulsoup4==4.12.3
+
+# Robust HTML extraction (for pages that are mostly valid HTML).
+# Used as a fallback when BeautifulSoup struggles.
+html5lib==1.1
+
+# Standard library 'sqlite3' is sufficient — no DB driver needed.
+# (Listed here as a comment for clarity.)
+# sqlite3  # built-in
+
+# --- Dev / test (split into requirements-dev.txt in a later sprint) -----
+pytest==8.3.2
+pytest-cov==5.0.0

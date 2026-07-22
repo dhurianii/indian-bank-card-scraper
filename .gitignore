@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+
+# App artifacts
+images/raw/*
+database/*.db
+database/*.db-journal
+logs/*.log
+!logs/.gitkeep
+
+# Editors
+.vscode/
+.idea/
+*.swp
+.DS_Store
