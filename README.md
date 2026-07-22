@@ -32,6 +32,7 @@ indian-bank-card-scraper/
 ├── images/raw/             # Downloaded images, unmodified.
 ├── database/               # SQLite file lives here.
 ├── logs/                   # Rotating log files.
+├── scripts/                # Manual integration test scripts (not pytest).
 ├── tests/                  # Pytest suite, mirrors the source tree.
 ├── docs/                   # Architecture notes, runbooks, ADRs.
 └── requirements.txt        # Pinned dependencies for v1.
@@ -55,6 +56,7 @@ indian-bank-card-scraper/
 | `images/raw/`          | Untouched downloaded card images.                                              |
 | `database/`            | SQLite database file location.                                                 |
 | `logs/`                | `scraper.log` and friends.                                                     |
+| `scripts/`             | Manual integration-test scripts (run by hand, not by pytest).                  |
 | `tests/`               | Pytest suite, mirrors source tree.                                             |
 | `docs/`                | Architecture decisions, runbooks.                                              |
 | `requirements.txt`     | Pinned Python dependencies.                                                    |
@@ -68,6 +70,34 @@ pip install --upgrade pip
 pip install -r requirements.txt
 python main.py
 ```
+
+## Manual Integration Test
+
+A real-network smoke test for the `HttpClient`. This script is
+**not** part of the pytest suite — it is meant to be run by hand to
+verify that the HTTP layer can actually reach a real bank site.
+
+```bash
+python scripts/test_http_client.py
+```
+
+**Expected output (stdout):**
+
+```
+2026-07-22 18:30:01,234 | INFO     | http_client | HTTP request started: GET https://www.hdfcbank.com/personal/pay/cards (timeout=30.0s)
+2026-07-22 18:30:02,891 | INFO     | http_client | HTTP response: https://www.hdfcbank.com/personal/pay/cards -> 200 (87342 bytes)
+
+HTTP success
+  URL     : https://www.hdfcbank.com/personal/pay/cards
+  Chars   : 87,342
+  Output  : C:\Users\USER\indian-bank-card-scraper\logs\debug\hdfc_cards.html
+```
+
+**Expected output file:** `logs/debug/hdfc_cards.html`
+— a non-empty HTML document, typically starting with `<!DOCTYPE html>`
+or `<html`.
+
+The script exits with code `0` on success and `1` on any `HttpClientError`.
 
 ## Design principles
 
