@@ -362,27 +362,28 @@ Completed
 - 57/57 tests passing
 
 ---
+ ## Sprint 3.3 ✅ Complete
 
-## Next Task
+### Completed
+- Downloaded HDFC Credit Cards category page.
+- Built `parsers/hdfc_credit_cards.py`.
+- Extracted 45 unique credit cards.
+- Preserved `/coming-soon` entries.
+- Skipped placeholder CTA cards.
+- Deduplicated by URL while preserving order.
+- Added manual parser verification script.
+- Added 10 parser unit tests.
+- Full test suite passing (67 tests).
 
-Sprint 3.3
-
-Visit the 7 HDFC category pages returned by the listing parser
-and extract individual card listings from each.
-
-Do not work on
-
-- Database
-- Images
-- Card metadata extraction
-- Multi-bank support
-
----
+### Discovery
+The HDFC Credit Cards page is server-rendered and contains 45 individual card entries inside repeated `div.card-wrap` elements.
 
 ## Last Successful Test
 
 ```
 57 / 57 Passed
+
+67 / 67 Passed
 ```
 
 ---
@@ -392,25 +393,30 @@ Do not work on
 ```
 feat(http): implement reusable HTTP client and integration test
 ```
-
+feat(parser): add HDFC credit cards parser and tests
 ---
 
 ## Resume Prompt
 
-When starting a new Claude Code session:
-
-```
 Read PROJECT_STATUS.md first.
 
-Understand the current architecture.
-
-Continue only from the current sprint.
+Understand the current architecture and current sprint.
 
 Do not redesign completed modules.
 
-Implement only the requirements of the current sprint.
+Do not modify completed sprints unless fixing a bug.
 
-Preserve all passing tests.
+Continue only from the next unfinished sprint.
+
+Preserve backward compatibility.
+
+Keep all existing tests passing.
+
+After implementing each sprint:
+1. Run the relevant parser manually.
+2. Run the full pytest suite.
+3. Update PROJECT_STATUS.md and CHANGELOG.md.
+4. Stop and report before starting the next sprint.
 ```
 
 ---

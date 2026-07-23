@@ -6,6 +6,26 @@ This project follows a sprint-based development approach.
 
 ---
 
+
+## Sprint 3.3 - HDFC Credit Card Parser(23/072026)
+
+Added
+- `parsers/hdfc_credit_cards.py`
+- `scripts/parse_hdfc_credit_cards.py`
+- `tests/test_hdfc_credit_cards_parser.py`
+
+Implemented
+- Pure HTML parser using BeautifulSoup.
+- Extracted 45 unique cards.
+- URL-based deduplication.
+- Preserved relative URLs.
+- Included `/coming-soon` cards.
+- Ignored placeholder CTA cards.
+
+Testing
+- Added 10 parser tests.
+- Full project test suite: 67 passing.
+
 # Sprint 3.2 (23 July 2026)
 
 ## Added
