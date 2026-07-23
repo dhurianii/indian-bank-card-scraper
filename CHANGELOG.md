@@ -6,6 +6,81 @@ This project follows a sprint-based development approach.
 
 ---
 
+# Sprint 3.2 (23 July 2026)
+
+## Added
+
+### HDFC Listing Parser
+
+- `parsers/hdfc.py` — pure function `parse_listing(html) -> list[dict]`
+- Returns only `card_name` (from `title` attribute) and `card_url`
+  (from `href` attribute), verbatim — no normalization, no
+  absolutization
+- Selector: `a.cmp-teaser__action-link.btn.btn-secondary`
+  (AEM BEM class, stable, excludes nav menu and "Read More"
+  expanders)
+- Deduplicates by URL while preserving document order
+- Skips entries with empty name or empty URL
+
+### Tests
+
+- `tests/test_hdfc_parser.py` — 19 tests
+- Coverage:
+  - Real saved HTML (`logs/debug/hdfc_cards.html`) — 7 cards
+  - 7 card-name presence checks (all observed in the HTML)
+  - 4 URL presence checks
+  - Relative-URL preservation
+  - "View " prefix preservation (no normalization)
+  - Document order
+  - URL uniqueness
+  - Empty / unrelated HTML
+  - Missing title / missing href
+  - Deduplication
+  - Selector stability vs. non-card anchors
+
+### Manual Verification
+
+- `scripts/parse_hdfc_listing.py` — reads the saved HTML, prints
+  `Cards Found`, `Unique URLs`, and the first 10 entries
+
+---
+
+## Testing
+
+- 19 new HDFC parser tests
+- Total Project Tests: **57 / 57 Passing** (38 prior + 19 new)
+
+---
+
+## Changed
+
+- No architecture changes
+- No database changes
+- No controller changes
+- No downloader changes
+- No HTTP client changes
+- `parsers/base.py` left untouched (parser deliberately
+  does not subclass it; reconciles in a later sprint)
+
+---
+
+## Fixed
+
+- None
+
+---
+
+## Discovery (does not affect Sprint 3.2 scope)
+
+- The HDFC `personal/pay/cards` page is a **category index**,
+  not a flat individual-card listing. It contains exactly 7
+  category teasers (Credit / Debit / Millennia / Prepaid /
+  Forex / Commercial / Business). Sprint 3.3 must fan out to
+  each category URL to reach individual card pages. Documented
+  in `PROJECT_STATUS.md` under Sprint 3.2.
+
+---
+
 # Sprint 3.1 (22 July 2026)
 
 ## Added

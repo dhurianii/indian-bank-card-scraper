@@ -154,6 +154,8 @@ Reliable HTTP layer ready for parsing.
 
 # Sprint 3.2 — Parse HDFC Listing Page
 
+Status: ✅ Completed
+
 ## Goal
 
 Read the downloaded HDFC cards page and extract only:
@@ -195,6 +197,37 @@ Not Allowed
 - Card metadata
 - CardRecord objects
 
+### Discovery (Important for Future Sprints)
+
+The page at `https://www.hdfcbank.com/personal/pay/cards` is a
+**category index**, not a flat list of individual card products.
+It contains exactly 7 server-rendered teasers, each pointing at a
+category landing page (e.g. `/credit-cards`, `/debit-cards`,
+`/millennia-cards`, `/prepaid-cards`, `/forex-cards`,
+`/commercial-credit-cards`, `/business-credit-cards`).
+
+Implications for the crawler architecture (does NOT change Sprint 3.2):
+
+- The Sprint 3.2 parser correctly extracts those 7 category
+  links as the listing's "cards" — that is faithful to the page.
+- Sprint 3.3 will need to follow each of those 7 URLs to reach
+  the real per-card listings. Some categories may themselves
+  have subcategories or paginated lists.
+- The crawler must be treated as a 2-level fan-out (category
+  index → category page → individual card), not a single flat
+  scrape.
+
+Technical notes for stability:
+
+- The page is server-rendered (Adobe AEM). No JS execution is
+  required; BeautifulSoup alone is sufficient.
+- The chosen selector `a.cmp-teaser__action-link.btn.btn-secondary`
+  is BEM-style and stable. It excludes nav-menu anchors (which
+  use different classes) and the "Read More" accordion expanders
+  (`href="#"`).
+- The `title` attribute on those anchors carries the "View …"
+  prefix by design; the Sprint 3.2 parser preserves it verbatim.
+
 ---
 
 # 🗺️ Development Roadmap
@@ -214,7 +247,7 @@ HTTP Client
 
 Sprint 3.2
 Parse Listing Page
-        ⏳
+        ✅
 
 Sprint 3.3
 Visit Individual Card Pages
@@ -245,7 +278,7 @@ Production Ready
 Current
 
 ```
-38 / 38 Tests Passing
+57 / 57 Tests Passing
 ```
 
 Run Tests
@@ -314,34 +347,34 @@ git push
 
 ## Last Completed
 
-Sprint 3.1 — HTTP Client
+Sprint 3.2 — Parse HDFC Listing Page
 
 Completed
 
-- Reusable HttpClient
-- Structured logging
-- Manual integration script
-- Documentation
-- 38/38 tests passing
+- Pure `parsers/hdfc.py` parser (no I/O, no normalization)
+- `parse_listing(html) -> list[dict]` returning `{card_name, card_url}`
+- Verbatim extraction (e.g. "View Credit Cards" → "/credit-cards")
+- 19 unit tests against the real saved HTML + synthetic edge cases
+- Manual verification script `scripts/parse_hdfc_listing.py`
+- Discovery: the HDFC page is a 7-item category index, not a
+  flat individual-card list. Sprint 3.3 must fan out to each
+  category URL.
+- 57/57 tests passing
 
 ---
 
 ## Next Task
 
-Sprint 3.2
+Sprint 3.3
 
-Build the first parser.
-
-Extract only
-
-- Card Name
-- Card URL
+Visit the 7 HDFC category pages returned by the listing parser
+and extract individual card listings from each.
 
 Do not work on
 
 - Database
 - Images
-- Metadata extraction
+- Card metadata extraction
 - Multi-bank support
 
 ---
@@ -349,7 +382,7 @@ Do not work on
 ## Last Successful Test
 
 ```
-38 / 38 Passed
+57 / 57 Passed
 ```
 
 ---
@@ -384,4 +417,4 @@ Preserve all passing tests.
 
 Last Updated
 
-**22 July 2026**
+**23 July 2026**
