@@ -278,7 +278,7 @@ Production Ready
 Current
 
 ```
-140 / 140 Tests Passing
+160 / 160 Tests Passing
 ```
 
 Run Tests
@@ -424,6 +424,78 @@ After implementing each sprint:
 Last Updated
 
 **24 July 2026**
+
+---
+
+## Sprint 4.1 ✅ Complete — SQLite Persistence
+
+### Goal
+Persist parsed `CardRecord` objects into SQLite via the existing
+`CardRepository` (Sprint 2). Confirm the parser-to-DB pipeline works
+end-to-end with the real HDFC detail-page fixture.
+
+### Decision
+**No code changes to `database.py` or `models.py` were required.**
+The Sprint 2 `CardRepository.save_card()` and `save_cards()` already
+implement:
+- INSERT-then-UPDATE via `ON CONFLICT(bank_id, card_slug) DO UPDATE SET`
+- JSON TEXT columns for `fees`, `rewards`, `extra` (no normalisation
+  into multiple tables)
+- `created_at` / `updated_at` UTC timestamps
+- Composite unique constraint `(bank_id, card_slug)`
+
+The schema already covers every field of `CardRecord` plus
+`created_at`/`updated_at`, so **no migration was needed**.
+
+### What was added
+- `tests/test_database_persistence.py` — **20 new tests** focused on
+  the parser-to-DB integration that the existing `test_database.py`
+  did not cover.
+- `scripts/test_database.py` — manual verification script.
+- `database/test_database_sprint_4_1.db` — dedicated DB used by the
+  manual script (production `database/cards.db` is never touched).
+
+### Test coverage added
+- Insert one card from real HDFC HTML
+- Insert returns distinct rowids
+- Update existing card (UPSERT)
+- Update preserves `created_at`
+- Duplicate save does not create another row
+- `UNIQUE(bank_id, card_slug)` constraint enforced at DB level
+- Different banks can share a slug
+- JSON round-trip: fees / rewards / extra on real parsed card
+- Complex nested JSON round-trip
+- JSON columns actually stored as TEXT
+- Unicode (₹, em-dashes) round-trip
+- Minimal card with no optional fields
+- Empty JSON dicts stored as `{}`, not NULL
+- Bulk save and individual fetch
+- Mix of insert + update in a single batch
+- Production DB is never touched
+- End-to-end: real HTML -> CardRecord -> SQLite -> CardRecord
+  (every field equal, dataclass equality works)
+- Persisted row id is positive int
+- `get_all_cards` ordering
+
+### Result
+**160/160 tests passing** (140 prior + 20 new). No regressions.
+
+### Files modified
+None. (The four forbidden files — `http_client.py`,
+`image_downloader.py`, `controller.py`, `main.py` — are confirmed
+untouched.)
+
+### Discovery (impacts future sprints)
+- The `test_production_db_does_not_grow_during_test_run` test
+  passes because the production `database/cards.db` does not yet
+  exist. Once a real run populates it, the test will switch modes
+  and check that the row count does not change during a test
+  run. This is a permanent regression guard.
+- `save_card` returns a positive integer rowid (the value the
+  manual script prints). The Sprint 4 architecture doc's
+  `BankScraper` interface should expect this signature: callers
+  that want to log "inserted row N" can do so without an
+  extra SELECT.
 
 ---
 

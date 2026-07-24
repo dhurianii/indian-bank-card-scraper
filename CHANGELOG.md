@@ -6,6 +6,83 @@ This project follows a sprint-based development approach.
 
 ---
 
+## Sprint 4.1 - SQLite Persistence (24 July 2026)
+
+### Added
+- `tests/test_database_persistence.py` — 20 new tests focused on
+  the parser-to-DB integration.
+- `scripts/test_database.py` — manual verification script that
+  loads the real HDFC detail page, parses it, saves it into a
+  dedicated SQLite file, reads it back, and prints every field
+  and the raw JSON columns.
+
+### Implemented
+- Confirmed end-to-end that `parsers.hdfc_card.parse_card(html)
+  -> CardRepository.save_card(record) -> CardRepository.get_card(...)`
+  round-trips every field of a real HDFC card.
+- Confirmed that JSON fields (`fees`, `rewards`, `extra`) survive
+  byte-for-byte through the database, including nested dicts,
+  lists, and Unicode (₹, em-dashes, narrow no-break spaces).
+- Confirmed that `ON CONFLICT(bank_id, card_slug) DO UPDATE SET`
+  preserves the original `created_at` while updating `updated_at`
+  and every other column.
+- Confirmed that the production `database/cards.db` is never
+  touched by tests or by the manual script.
+
+### Migration
+**None required.** The Sprint 2 schema already stores every
+field of `CardRecord` plus `created_at` / `updated_at`, with
+composite `UNIQUE(bank_id, card_slug)`. JSON columns are
+`TEXT NOT NULL DEFAULT '{}'`. The Sprint 4.1 deliverable is
+the test/script coverage, not new SQL.
+
+### SQL (unchanged from Sprint 2)
+```sql
+CREATE TABLE IF NOT EXISTS cards (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    bank_id     TEXT    NOT NULL,
+    card_slug   TEXT    NOT NULL,
+    card_name   TEXT    NOT NULL,
+    card_type   TEXT    NOT NULL CHECK (card_type IN ('debit', 'credit')),
+    network     TEXT    NOT NULL,
+    image_url   TEXT,
+    source_url  TEXT,
+    fees        TEXT    NOT NULL DEFAULT '{}',
+    rewards     TEXT    NOT NULL DEFAULT '{}',
+    extra       TEXT    NOT NULL DEFAULT '{}',
+    created_at  TEXT    NOT NULL,
+    updated_at  TEXT    NOT NULL,
+    UNIQUE (bank_id, card_slug)
+);
+```
+
+### Testing
+- 20 new tests in `tests/test_database_persistence.py`.
+- Total project tests: **160 / 160 passing** (140 prior + 20 new).
+
+### Changed
+- No code changes. `database.py`, `models.py`,
+  `http_client.py`, `image_downloader.py`, `controller.py`, and
+  `main.py` are all untouched.
+
+### Fixed
+- None.
+
+### Discovery
+- `save_card` returns a positive integer rowid. The Sprint 4
+  architecture's `BankScraper` interface should expose this so
+  the controller can log "inserted row N" without an extra
+  `SELECT`.
+- A regression-guard test
+  (`test_production_db_does_not_grow_during_test_run`) protects
+  the production `database/cards.db` from accidental writes by
+  future test suites. It works in two modes: when the
+  production DB exists, it asserts the row count is unchanged
+  after a `tmp_path` repo save; when it does not exist, it
+  asserts it is still not on disk after the test.
+
+---
+
 ## Sprint 3.6 - Image Downloader (24 July 2026)
 
 ### Added
