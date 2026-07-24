@@ -6,6 +6,66 @@ This project follows a sprint-based development approach.
 
 ---
 
+## Sprint 3.6 - Image Downloader (24 July 2026)
+
+### Added
+- `image_downloader.py` — new `ImageDownloader` class.
+- `tests/test_image_downloader.py` — 49 unit tests.
+- `scripts/download_hdfc_images.py` — end-to-end runner that parses
+  the saved listing, fetches every detail page, extracts
+  `image_url`, and downloads the image.
+
+### Implemented
+- Reuses the existing `HttpClient` (Sprint 3.1). Added a small
+  additive `HttpClient.get_bytes(url) -> bytes` for binary payloads
+  so the same session, headers, timeout, and exception mapping
+  apply to image fetches.
+- Saves to `images/raw/<bank_id>/<card_slug>.<ext>`. Extension is
+  derived from the URL path (or `?fmt=` query) and falls back to
+  `.webp` per the brief.
+- Skips downloads when the target file already exists (idempotent
+  re-runs).
+- Returns the local `Path` on success, `None` on every failure
+  mode (timeout, connection error, HTTP error, empty body,
+  non-image body, empty URL, invalid URL).
+- Structured logging via the project-wide `logging.getLogger`.
+- New typed exceptions: `ImageDownloadError`,
+  `InvalidImageUrlError`, `InvalidImageContentError`.
+- Magic-byte content sniffing (RIFF/WEBP, PNG, JPEG, GIF, SVG)
+  so a 200 OK HTML error page is correctly rejected.
+
+### Discovery (impacts future sprints)
+- 5 of 45 detail pages do not expose an `image_url` through the
+  existing `div.pd-banner img.cmp-image__image` selector. Affected:
+  Pixel Play, Diners Club Black Metal Edition, Pixel Go,
+  Swiggy HDFC Bank, HDFC Bank H-O-G Diners Club. Future sprint
+  should add a fallback (e.g. `<meta property="og:image">`).
+- One URL is aliased by HDFC: the listing's
+  `/credit-cards/platinum-edge-credit-card` resolves to a
+  canonical `.../platinum-edge-credit-card/fees-and-charges`,
+  so the derived slug and saved filename are `fees-and-charges`,
+  not `platinum-edge-credit-card`. Future sprint: cross-reference
+  against the listing's URL to recover the listing's slug.
+- Three cards (Diners Black, Diners Privilege, Regalia Activ)
+  receive the same 4448-byte WebP from HDFC's CDN — a generic
+  placeholder, not a code bug. Manual review recommended.
+
+### Testing
+- 49 new tests in `tests/test_image_downloader.py`.
+- Total project tests: **140 / 140 passing** (91 prior + 49 new).
+
+### Changed
+- `http_client.py`: added `get_bytes()` for binary downloads. The
+  existing `.get()` text method is unchanged.
+- No changes to `database.py`, `models.py`, `controller.py`, or
+  `main.py` (per the Sprint 3.6 rules).
+- No changes to any existing test file.
+
+### Fixed
+- None.
+
+---
+
 
 ## Sprint 3.3 - HDFC Credit Card Parser(23/072026)
 

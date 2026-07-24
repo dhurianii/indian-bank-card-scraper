@@ -130,6 +130,50 @@ class HttpClient:
         # bytes should never abort a fetch.
         return response.text
 
+    def get_bytes(self, url: str, *, timeout: Optional[float] = None) -> bytes:
+        """Fetch a URL and return the raw response body as bytes.
+
+        Used by the image downloader (Sprint 3.6) where decoding the
+        payload as text would corrupt binary image data. Reuses the same
+        session, headers, timeout, and exception mapping as ``get``.
+
+        Raises:
+            HttpRequestError:   connection / timeout / TLS failures.
+            HttpResponseError:  HTTP status >= 400.
+        """
+        effective_timeout = float(timeout) if timeout is not None else self.timeout
+        logger.info(
+            "HTTP binary request started: GET %s (timeout=%.1fs)",
+            url,
+            effective_timeout,
+        )
+
+        try:
+            response = self._session.get(url, timeout=effective_timeout)
+        except requests.exceptions.Timeout as exc:
+            logger.error("HTTP timeout after %.1fs: %s", effective_timeout, url)
+            raise HttpRequestError(
+                f"Timeout after {effective_timeout}s: {url}"
+            ) from exc
+        except requests.exceptions.ConnectionError as exc:
+            logger.error("HTTP connection error: %s", url)
+            raise HttpRequestError(f"Connection error: {url}") from exc
+        except requests.exceptions.SSLError as exc:
+            logger.error("HTTP TLS error: %s", url)
+            raise HttpRequestError(f"TLS error: {url}") from exc
+        except requests.exceptions.RequestException as exc:
+            logger.error("HTTP request failed: %s", url)
+            raise HttpRequestError(f"Request failed: {url}") from exc
+
+        status = response.status_code
+        size = len(response.content)
+        logger.info("HTTP response: %s -> %d (%d bytes)", url, status, size)
+
+        if status >= 400:
+            raise HttpResponseError(f"HTTP {status} for {url} ({size} bytes)")
+
+        return response.content
+
     def close(self) -> None:
         """Release the underlying connection pool."""
         self._session.close()

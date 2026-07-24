@@ -278,7 +278,7 @@ Production Ready
 Current
 
 ```
-57 / 57 Tests Passing
+140 / 140 Tests Passing
 ```
 
 Run Tests
@@ -423,4 +423,59 @@ After implementing each sprint:
 
 Last Updated
 
-**23 July 2026**
+**24 July 2026**
+
+---
+
+## Sprint 3.6 ✅ Complete
+
+### Completed
+- `image_downloader.py` with `ImageDownloader` class.
+- Reuses the existing `HttpClient` (extended with a small additive
+  `get_bytes` method for binary payloads — the original `.get()` text
+  method is untouched).
+- Saves under `images/raw/<bank_id>/<card_slug>.<ext>`. Extension is
+  derived from the URL path / `?fmt=` query and falls back to `.webp`.
+- Skips downloads whose target file already exists (idempotent).
+- Handles timeouts, connection errors, HTTP 4xx/5xx, empty bodies,
+  and invalid (non-image) responses.
+- Structured logging consistent with the rest of the project.
+- 49 new unit tests covering: success, file-already-present skip,
+  timeout, HTTP error, connection error, invalid content, empty URL,
+  invalid scheme/host, plus helpers for extension / slug / magic-byte
+  sniffing.
+- `scripts/download_hdfc_images.py` end-to-end runner: loads
+  `logs/debug/hdfc_credit_cards.html`, parses all 45 cards, fetches
+  every detail page via `HttpClient`, extracts `image_url` with
+  `parsers.hdfc_card.parse_card`, and downloads every image.
+- All 45 detail pages fetched against the real HDFC origin.
+- 40 of 45 images downloaded successfully.
+
+### Result
+40 real WebP files under `images/raw/hdfc/`. Total project tests:
+**140/140 passing** (91 prior + 49 new).
+
+### Discovery (impacts future sprints)
+- 5 detail pages have **no `image_url`** at all on the hero
+  selector used by `parsers/hdfc_card`. Affected cards:
+  Pixel Play, Diners Club Black Metal Edition, Pixel Go,
+  Swiggy HDFC Bank, and HDFC Bank H-O-G Diners Club.
+  Their `div.pd-banner img.cmp-image__image` is absent from the
+  markup. Future sprint: add a fallback selector (e.g. an
+  `<meta property="og:image">` tag, or a "compare-card" image
+  elsewhere on the page) and re-run the downloader.
+- HDFC aliases one URL to a sub-page: the listing's
+  `/credit-cards/platinum-edge-credit-card` resolves to a canonical
+  `.../platinum-edge-credit-card/fees-and-charges`, so the parser
+  derives the slug `fees-and-charges`. The downloaded image is
+  real but the filename does not match the listing's card name.
+  Future sprint: cross-reference the slug against the listing
+  entry's URL to disambiguate.
+- HDFC's CDN serves the same 4448-byte WebP to three different
+  cards (Diners Black, Diners Privilege, Regalia Activ). Likely a
+  generic placeholder, not a data-corruption issue. No code action
+  needed; flag for manual review of those three card pages.
+- The new `HttpClient.get_bytes` method is the only addition to
+  `http_client.py`. It reuses the same session, headers, timeout,
+  and exception mapping as `.get()`. No changes to
+  `database.py`, `models.py`, `controller.py`, or `main.py`.
